@@ -25,7 +25,7 @@ public abstract class NaturalLanguageEngine<T> : INaturalLanguageEngine<T>
         {
             messages.Add(ChatMessage.CreateSystemMessage(ContextSystemMessage));
         }
-        messages.Add(ChatMessage.CreateSystemMessage(filterComposer.CreateMessageContent()));
+        messages.Add(ChatMessage.CreateSystemMessage(filterComposer.Formatter.CreateMessageContent()));
         messages.Add(ChatMessage.CreateUserMessage($"""
             Please provide list of filters to use for following query:
             "{query}"
@@ -33,7 +33,7 @@ public abstract class NaturalLanguageEngine<T> : INaturalLanguageEngine<T>
 
         var response = await client.CompleteChatAsync(messages.ToArray(), new ChatCompletionOptions()
         {
-            ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat("response_format", BinaryData.FromString(filterComposer.GetJsonSchema()))
+            ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat("response_format", BinaryData.FromString(filterComposer.Formatter.GetJsonSchema()))
         });
 
         var content = response.Value.Content[0].Text;
