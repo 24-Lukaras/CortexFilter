@@ -2,7 +2,7 @@
 
 public class LesserOrEqual<T> : IOperation<T>
 {
-    public static string Code => "lt";
+    public static string Code => "le";
 
     private readonly T _value;
     public LesserOrEqual(T value)
