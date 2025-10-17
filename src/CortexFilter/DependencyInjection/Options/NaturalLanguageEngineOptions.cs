@@ -1,0 +1,19 @@
+﻿using CortexFilter.Filters;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace CortexFilter.DependencyInjection.Options;
+
+public class NaturalLanguageEngineOptions<T>
+{
+    private readonly IServiceCollection _services;
+    public NaturalLanguageEngineOptions(IServiceCollection services)
+    {
+        _services = services;
+    }
+
+    public NaturalLanguageEngineOptions<T> AddConcreteFilterFactory<TFilterFactory>() where TFilterFactory : class, IConcreteFilterFactory<T>
+    {
+        _services.AddScoped<IConcreteFilterFactory<T>, TFilterFactory>();
+        return this;
+    }
+}
