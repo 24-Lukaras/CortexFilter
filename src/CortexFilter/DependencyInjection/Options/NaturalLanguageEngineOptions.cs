@@ -16,4 +16,10 @@ public class NaturalLanguageEngineOptions<T>
         _services.AddScoped<IConcreteFilterFactory<T>, TFilterFactory>();
         return this;
     }
+
+    public NaturalLanguageEngineOptions<T> AddAmbiguousFilter<TFilter>() where TFilter : AmbiguousFilter<T>
+    {
+        _services.AddScoped<AmbiguousFilter<T>, TFilter>();
+        return this;
+    }
 }

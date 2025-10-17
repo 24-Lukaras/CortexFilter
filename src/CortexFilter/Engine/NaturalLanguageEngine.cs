@@ -16,7 +16,8 @@ public abstract class NaturalLanguageEngine<T> : INaturalLanguageEngine<T>
 
     public async Task<IEnumerable<T>> SearchAsync(string query)
     {
-        var filterComposer = new FiltersComposer<T>(_properties.ConcreteFilterFactories);
+        var filterComposer = new FiltersComposer<T>(_properties.ConcreteFilterFactories,
+            _properties.AmbiguousFilters);
 
         var client = _properties.ClientProvider.GetClient();
 
@@ -43,6 +44,7 @@ public abstract class NaturalLanguageEngine<T> : INaturalLanguageEngine<T>
             return Array.Empty<T>();
 
         var data = await GetDataAsync();
+        await filterComposer.RunInitializersAsync(query, client, data);
         var filteredData = filter.Filter(data);
         return filteredData;
     }

@@ -1,6 +1,7 @@
 ﻿using CortexFilter.Filters.Composition;
 using CortexFilter.Filters.Composition.LogicalOperations;
 using CortexFilter.Filters.Composition.Responses;
+using OpenAI.Chat;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -8,12 +9,16 @@ namespace CortexFilter.Filters;
 
 internal class FiltersComposer<T>
 {
+    private readonly List<IFilterInitializer<T>> _initializers = new List<IFilterInitializer<T>>();
     public FiltersComposerFormatter<T> Formatter { get; }
     private readonly IReadOnlyDictionary<string, IConcreteFilterFactory<T>> _concreteFilterFactories;
-    public FiltersComposer(IEnumerable<IConcreteFilterFactory<T>> concreteFilterFactories)
+    private readonly IReadOnlyDictionary<string, AmbiguousFilter<T>> _ambiguousFilters;
+    public FiltersComposer(IEnumerable<IConcreteFilterFactory<T>> concreteFilterFactories,
+        IEnumerable<AmbiguousFilter<T>> ambiguousFilters)
     {
-        Formatter = new FiltersComposerFormatter<T>(concreteFilterFactories);
+        Formatter = new FiltersComposerFormatter<T>(concreteFilterFactories, ambiguousFilters);
         _concreteFilterFactories = concreteFilterFactories.ToDictionary(x => x.Name);
+        _ambiguousFilters = ambiguousFilters.ToDictionary(x => x.Name);
     }
 
     public ICollectionFilter<T>? Compose(string json)
@@ -34,6 +39,7 @@ internal class FiltersComposer<T>
         {
             "logicalOperation" => ProcessLogicalOperationNode(node),
             "filter" => ProcessFilterNode(node),
+            "ambiguousFilter" => ProcessAmbiguousFilterNode(node),
             _ => throw new NotSupportedException()
         };
     }
@@ -54,6 +60,23 @@ internal class FiltersComposer<T>
         var factory = _concreteFilterFactories[filterResponse.Name];
         var filter = factory.CreateFilter(filterResponse.Operation, filterResponse.Value);
         return filter;
+    }
+    private ICollectionFilter<T> ProcessAmbiguousFilterNode(JsonNode node)
+    {
+        var response = JsonSerializer.Deserialize<AmbiguousFilterItemResponse>(node.ToJsonString());
+        var filter = _ambiguousFilters[response.Name];
+        _initializers.Add(filter);
+        return filter;
+    }
+
+    public async Task RunInitializersAsync(string query, ChatClient client, IEnumerable<T> collection)
+    {
+        var tasks = _initializers
+            .Select(x => x.InitAsync(query, client, collection))
+            .ToArray();
+
+        await Task.WhenAll(tasks);
+        _initializers.Clear();
     }
 
 }
