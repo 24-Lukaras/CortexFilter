@@ -6,14 +6,20 @@ internal class NaturalLanguageEngineProperties<T> : INaturalLanguageEngineProper
 {
     public IEnumerable<IConcreteFilterFactory<T>> ConcreteFilterFactories { get; }
     public IEnumerable<AmbiguousFilter<T>> AmbiguousFilters { get; }
+    public IEnumerable<ICortexResource<T>> Resources { get; }
     public IChatClientProvider ClientProvider { get; }
+    public ICortex Cortex { get; }
 
     public NaturalLanguageEngineProperties(IEnumerable<IConcreteFilterFactory<T>> concreteFilterFactories,
         IEnumerable<AmbiguousFilter<T>> ambiguousFilters,
-        IChatClientProvider clientProvider)
+        IEnumerable<ICortexResource<T>> resources,
+        IChatClientProvider clientProvider,
+        ICortex cortex)
     {
         ConcreteFilterFactories = concreteFilterFactories;
         AmbiguousFilters = ambiguousFilters;
+        Resources = resources;
         ClientProvider = clientProvider;
+        Cortex = cortex;
     }
 }

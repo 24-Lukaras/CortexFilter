@@ -1,7 +1,6 @@
 ﻿using CortexFilter.Filters.Composition;
 using CortexFilter.Filters.Composition.LogicalOperations;
 using CortexFilter.Filters.Composition.Responses;
-using OpenAI.Chat;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -13,12 +12,15 @@ internal class FiltersComposer<T>
     public FiltersComposerFormatter<T> Formatter { get; }
     private readonly IReadOnlyDictionary<string, IConcreteFilterFactory<T>> _concreteFilterFactories;
     private readonly IReadOnlyDictionary<string, AmbiguousFilter<T>> _ambiguousFilters;
+    private readonly IReadOnlyDictionary<string, ICortexResource<T>> _resources;
     public FiltersComposer(IEnumerable<IConcreteFilterFactory<T>> concreteFilterFactories,
-        IEnumerable<AmbiguousFilter<T>> ambiguousFilters)
+        IEnumerable<AmbiguousFilter<T>> ambiguousFilters,
+        IEnumerable<ICortexResource<T>> resources)
     {
-        Formatter = new FiltersComposerFormatter<T>(concreteFilterFactories, ambiguousFilters);
-        _concreteFilterFactories = concreteFilterFactories.ToDictionary(x => x.Name);
-        _ambiguousFilters = ambiguousFilters.ToDictionary(x => x.Name);
+        _concreteFilterFactories = concreteFilterFactories.GroupBy(x => x.Name).ToDictionary(x => x.Key, x => x.First());
+        _ambiguousFilters = ambiguousFilters.GroupBy(x => x.Name).ToDictionary(x => x.Key, x => x.First());
+        _resources = resources.GroupBy(x => x.Name).ToDictionary(x => x.Key, x => x.First());
+        Formatter = new FiltersComposerFormatter<T>(_concreteFilterFactories.Values, _ambiguousFilters.Values, _resources.Values);
     }
 
     public ICollectionFilter<T>? Compose(string json)
@@ -40,6 +42,7 @@ internal class FiltersComposer<T>
             "logicalOperation" => ProcessLogicalOperationNode(node),
             "filter" => ProcessFilterNode(node),
             "ambiguousFilter" => ProcessAmbiguousFilterNode(node),
+            "resource" => ProcessResourceNode(node),
             _ => throw new NotSupportedException()
         };
     }
@@ -68,11 +71,18 @@ internal class FiltersComposer<T>
         _initializers.Add(filter);
         return filter;
     }
+    private ICollectionFilter<T> ProcessResourceNode(JsonNode node)
+    {
+        var response = JsonSerializer.Deserialize<ResourceItemResponse>(node.ToJsonString());
+        var filter = _resources[response.Name];
+        _initializers.Add(filter);
+        return filter;
+    }
 
-    public async Task RunInitializersAsync(string query, ChatClient client, IEnumerable<T> collection)
+    public async Task RunInitializersAsync(FilterInitializerProperties<T> properties)
     {
         var tasks = _initializers
-            .Select(x => x.InitAsync(query, client, collection))
+            .Select(x => x.InitAsync(properties))
             .ToArray();
 
         await Task.WhenAll(tasks);

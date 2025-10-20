@@ -4,21 +4,25 @@ internal class FiltersComposerFormatter<T>
 {
     private readonly IEnumerable<IConcreteFilterFactory<T>> _concreteFilterFactories;
     private readonly IEnumerable<AmbiguousFilter<T>> _ambiguousFilters;
+    private readonly IEnumerable<ICortexResource<T>> _resources;
     public FiltersComposerFormatter(IEnumerable<IConcreteFilterFactory<T>> concreteFilterFactories,
-        IEnumerable<AmbiguousFilter<T>> ambiguousFilters)
+        IEnumerable<AmbiguousFilter<T>> ambiguousFilters,
+        IEnumerable<ICortexResource<T>> resources)
     {
         _concreteFilterFactories = concreteFilterFactories;
         _ambiguousFilters = ambiguousFilters;
+        _resources = resources;
     }
 
     public string CreateMessageContent()
     {
         return $"""
-            Here is a list of operations of and filters that can be used for filtering.{ConcreteFiltersInfo()}{AmbiguousFiltersInfo()}
+            Here is a list of operations of and filters that can be used for filtering.{ConcreteFiltersInfo()}{AmbiguousFiltersInfo()}{ResourcesInfo()}
             You can use logical operations OR/AND to combine validations.
 
             {FormatFilters()}
             {FormatAmbiguousFilters()}
+            {FormatResources()}
             """;
     }
     private string ConcreteFiltersInfo() =>
@@ -29,6 +33,10 @@ internal class FiltersComposerFormatter<T>
         !_ambiguousFilters.Any()
             ? string.Empty
             : "\nAmbiguous filters are ambiguous validations, that will be executed in further steps.";
+    private string ResourcesInfo() =>
+        !_resources.Any()
+            ? string.Empty
+            : "\nResources are filters, that depend on other entities in the system.";
     private string FormatFilters() =>
         !_concreteFilterFactories.Any()
             ? string.Empty
@@ -78,6 +86,26 @@ internal class FiltersComposerFormatter<T>
             return $"\t{filter.Name}";
         return $"\t{filter.Name} - \"{filter.Description}\"";
     }
+    private string FormatResources() =>
+        !_resources.Any()
+            ? string.Empty
+            : $$"""
+                Resources will be listed in following format (description is optional):
+                    {ResourceName} - "{ResourceDescription}"
+
+                Resources:
+                {{FormatResourceInstances()}}
+
+                """;
+    private string FormatResourceInstances() =>
+        string.Join("\n", _resources.Select(FormatResource));
+    private string FormatResource(ICortexResource<T> filter)
+    {
+        if (string.IsNullOrEmpty(filter.Description))
+            return $"\t{filter.Name}";
+        return $"\t{filter.Name} - \"{filter.Description}\"";
+    }
+
 
     public string GetJsonSchema() => $$"""
         {
@@ -106,6 +134,9 @@ internal class FiltersComposerFormatter<T>
                     },
                     {
                       "$ref": "#/definitions/ambiguousFilter"
+                    },
+                    {
+                      "$ref": "#/definitions/resource"
                     }
                   ]
                 }
@@ -158,6 +189,23 @@ internal class FiltersComposerFormatter<T>
                 "type",
                 "filterName"
               ]
+            },
+            "resource": {
+              "properties": {
+                "type": {
+                  "const": "resource"
+                },
+                "resourceName": {
+                  "type": "string",
+                  "enum": [
+                  {{string.Join(",\n", _resources.Select(x => $"\t\"{x.Name}\""))}}
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "resourceName"
+              ]
             }
           },
           "type": "object",
@@ -167,7 +215,8 @@ internal class FiltersComposerFormatter<T>
               "oneOf": [
                 { "$ref": "#/definitions/logicalOperation" },
                 { "$ref": "#/definitions/filter" },
-                { "$ref": "#/definitions/ambiguousFilter" }
+                { "$ref": "#/definitions/ambiguousFilter" },
+                { "$ref": "#/definitions/resource" }
               ]
             }
           },

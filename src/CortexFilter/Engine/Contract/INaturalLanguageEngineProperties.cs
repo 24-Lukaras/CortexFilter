@@ -5,7 +5,9 @@ namespace CortexFilter;
 
 public interface INaturalLanguageEngineProperties<T>
 {
-    public IEnumerable<IConcreteFilterFactory<T>> ConcreteFilterFactories { get; }
-    public IEnumerable<AmbiguousFilter<T>> AmbiguousFilters { get; }
-    public IChatClientProvider ClientProvider { get; }
+    internal IEnumerable<IConcreteFilterFactory<T>> ConcreteFilterFactories { get; }
+    internal IEnumerable<AmbiguousFilter<T>> AmbiguousFilters { get; }
+    internal IEnumerable<ICortexResource<T>> Resources { get; }
+    internal IChatClientProvider ClientProvider { get; }
+    internal ICortex Cortex { get; }
 }

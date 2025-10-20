@@ -22,4 +22,10 @@ public class NaturalLanguageEngineOptions<T>
         _services.AddScoped<AmbiguousFilter<T>, TFilter>();
         return this;
     }
+
+    public NaturalLanguageEngineOptions<T> AddResource<TFilter, TResource>() where TFilter : CortexResource<T, TResource>
+    {
+        _services.AddScoped<ICortexResource<T>, TFilter>();
+        return this;
+    }
 }

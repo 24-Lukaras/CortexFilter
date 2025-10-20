@@ -10,8 +10,8 @@ public abstract class AmbiguousFilter<T> : ICollectionFilter<T>, IFilterInitiali
 
     public abstract IEnumerable<T> Filter(IEnumerable<T> collection);
 
-    public Task InitAsync(string query, ChatClient client, IEnumerable<T> collection) =>
-        InitInternalAsync(query, client, collection);
+    public Task InitAsync(FilterInitializerProperties<T> properties) =>
+        InitInternalAsync(properties.Query, properties.Client, properties.Collection);
 
     protected abstract Task InitInternalAsync(string query, ChatClient client, IEnumerable<T> collection);
 }
