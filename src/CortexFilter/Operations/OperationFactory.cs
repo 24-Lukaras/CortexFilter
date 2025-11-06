@@ -1,7 +1,16 @@
 ﻿namespace CortexFilter.Operations;
 
+/// <summary>
+/// Static class for creation of operations for filters. Use <see cref="CreateFromCode{T}(string, T)"/> to create an operation.
+/// </summary>
 public static class OperationFactory
 {
+    /// <summary>
+    /// Creates a string operation based on provided code.
+    /// </summary>
+    /// <param name="code">Code of operation. For example "<i>eq</i>" for <see cref="Equals{T}"/> or "<i>contains</i>" for <see cref="Contains"/>.</param>
+    /// <param name="value">String used in filtration.</param>
+    /// <returns>Operation used for filtration.</returns>
     public static IOperation<string> CreateFromCode(string code, string value)
     {
         if (code == Contains.Code)
@@ -13,6 +22,14 @@ public static class OperationFactory
 
         return CreateFromCode<string>(code, value);
     }
+
+    /// <summary>
+    /// Creates an operation based on provided code and value.
+    /// </summary>
+    /// <typeparam name="T">Type of to be evaluated value.</typeparam>
+    /// <param name="code">Code of operation. For example "<i>eq</i>" for <see cref="Equals{T}"/> or "<i>le</i>" for <see cref="LesserThan{T}"/>.</param>
+    /// <param name="value">Value used in filtration.</param>
+    /// <returns>Operation used for filter evaluation.</returns>
     public static IOperation<T> CreateFromCode<T>(string code, T value)
     {
         if (code == Equals<T>.Code)
