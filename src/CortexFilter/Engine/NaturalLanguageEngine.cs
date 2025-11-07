@@ -3,6 +3,10 @@ using OpenAI.Chat;
 
 namespace CortexFilter;
 
+/// <summary>
+/// Abstract class for natural language filtering. Needs <see cref="GetDataAsync"/> and <see cref="ContextSystemMessage"/> implemented.
+/// </summary>
+/// <typeparam name="T">Type of filtered data.</typeparam>
 public abstract class NaturalLanguageEngine<T> : INaturalLanguageEngine<T>
 {
     private readonly INaturalLanguageEngineProperties<T> _properties;
@@ -11,9 +15,18 @@ public abstract class NaturalLanguageEngine<T> : INaturalLanguageEngine<T>
         _properties = properties;
     }
 
+    /// <summary>
+    /// Async function that retrieves data which are used for filtering.
+    /// </summary>
+    /// <returns>Collection of data to be filtered.</returns>
     public abstract Task<IEnumerable<T>> GetDataAsync();
+
+    /// <summary>
+    /// Defines additional context that is sent to LLM.
+    /// </summary>
     public abstract string? ContextSystemMessage { get; }
 
+    /// <inheritdoc/>
     public async Task<IEnumerable<T>> SearchAsync(string query)
     {
         var filterComposer = new FiltersComposer<T>(_properties.ConcreteFilterFactories,

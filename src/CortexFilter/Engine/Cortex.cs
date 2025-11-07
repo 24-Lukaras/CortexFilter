@@ -2,6 +2,9 @@
 
 namespace CortexFilter.Engine;
 
+/// <summary>
+/// Mediator service for <see cref="Filters.CortexResource{T,E}"/> to filter from multiple search engines.
+/// </summary>
 internal class Cortex : ICortex
 {
     private readonly IServiceProvider _services;
@@ -10,7 +13,8 @@ internal class Cortex : ICortex
         _services = services;
     }
 
-    public Task<IEnumerable<T>> Search<T>(string query)
+    ///<inheritdoc/>
+    public Task<IEnumerable<T>> SearchAsync<T>(string query)
     {
         var engine = _services.GetService<INaturalLanguageEngine<T>>();
 
