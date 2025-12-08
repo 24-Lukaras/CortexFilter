@@ -15,14 +15,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenAI" Version="2.5.0" />
+    <None Remove="Resources\logo.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Resources\logo.png">
+    <Content Include="Resources\logo.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
-    </None>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenAI" Version="2.5.0" />
   </ItemGroup>
 
 </Project>
