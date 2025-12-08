@@ -12,6 +12,6 @@ public abstract class CortexResource<TSource, TResult> : ICortexResource<TSource
 
     public async Task InitAsync(FilterInitializerProperties<TSource> properties)
     {
-        _resourceItems = await properties.Cortex.Search<TResult>(properties.Query);
+        _resourceItems = await properties.Cortex.SearchAsync<TResult>(properties.Query);
     }
 }
