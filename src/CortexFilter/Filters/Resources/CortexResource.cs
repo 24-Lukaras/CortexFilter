@@ -1,6 +1,4 @@
-﻿using OpenAI.Chat;
-
-namespace CortexFilter.Filters;
+﻿namespace CortexFilter.Filters;
 
 public abstract class CortexResource<TSource, TResult> : ICortexResource<TSource>
 {

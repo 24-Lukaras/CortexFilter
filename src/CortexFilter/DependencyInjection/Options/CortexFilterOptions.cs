@@ -1,5 +1,8 @@
 ﻿using CortexFilter.Engine;
+using CortexFilter.Filters;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
+using System.Security.AccessControl;
 
 namespace CortexFilter.DependencyInjection.Options;
 
@@ -38,6 +41,19 @@ public class CortexFilterOptions
         _services.AddScoped<INaturalLanguageEngineProperties<TEntity>, NaturalLanguageEngineProperties<TEntity>>();
         var options = new NaturalLanguageEngineOptions<TEntity>(_services);
         engineOptions(options);
+        return this;
+    }
+
+    /// <summary>
+    /// Registers client provider, engines and filters from assembly of provided type.
+    /// </summary>
+    /// <typeparam name="T">Assembly marker</typeparam>
+    /// <returns>The original <see cref="CortexFilterOptions"/>.</returns>
+    public CortexFilterOptions RegisterFromAssembly<T>()
+    {
+        var assembly = typeof(T).Assembly;
+        var registration = new FromAssemblyDependencyRegistration(_services, assembly);
+        registration.Register();
         return this;
     }
 }
