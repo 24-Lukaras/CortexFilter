@@ -1,4 +1,8 @@
-﻿namespace CortexFilter.Filters.Composition;
+﻿using CortexFilter.Filters.Composition.Schema;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+
+namespace CortexFilter.Filters.Composition;
 
 internal class FiltersComposerFormatter<T>
 {
@@ -19,6 +23,7 @@ internal class FiltersComposerFormatter<T>
         return $"""
             Here is a list of operations of and filters that can be used for filtering.{ConcreteFiltersInfo()}{AmbiguousFiltersInfo()}{ResourcesInfo()}
             You can use logical operations OR/AND to combine validations.
+            Do not invent filters with filterName that is not listed.
 
             {FormatFilters()}
             {FormatAmbiguousFilters()}
@@ -106,123 +111,54 @@ internal class FiltersComposerFormatter<T>
         return $"\t{filter.Name} - \"{filter.Description}\"";
     }
 
-
-    public string GetJsonSchema() => $$"""
+    public string GetJsonSchema()
+    {
+        List<string> references = new List<string>()
         {
-          "definitions": {
-            "logicalOperation": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "const": "logicalOperation"
-                },
-                "operation": {
-                  "type": "string",
-                  "enum": [
-                    "or",
-                    "and"
-                  ]
-                },
-                "validations": {
-                  "type": "array",
-                  "oneOf": [
-                    {
-                      "$ref": "#/definitions/logicalOperation"
-                    },
-                    {
-                      "$ref": "#/definitions/filter"
-                    },
-                    {
-                      "$ref": "#/definitions/ambiguousFilter"
-                    },
-                    {
-                      "$ref": "#/definitions/resource"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "type",
-                "operation",
-                "validations"
-              ]
-            },
-            "filter": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "const": "filter"
-                },
-                "filterName": {
-                  "type": "string",
-                  "enum": [
-                  {{string.Join(",\n", _concreteFilterFactories.Select(x => $"\t\"{x.Name}\""))}}
-                  ]
-                },
-                "operation": {
-                  "type": "string"
-                },
-                "value": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "type",
-                "filterName",
-                "operation",
-                "value"
-              ]
-            },
-            "ambiguousFilter": {
-              "properties": {
-                "type": {
-                  "const": "ambiguousFilter"
-                },
-                "filterName": {
-                  "type": "string",
-                  "enum": [
-                  {{string.Join(",\n", _ambiguousFilters.Select(x => $"\t\"{x.Name}\""))}}
-                  ]
-                }
-              },
-              "required": [
-                "type",
-                "filterName"
-              ]
-            },
-            "resource": {
-              "properties": {
-                "type": {
-                  "const": "resource"
-                },
-                "resourceName": {
-                  "type": "string",
-                  "enum": [
-                  {{string.Join(",\n", _resources.Select(x => $"\t\"{x.Name}\""))}}
-                  ]
-                }
-              },
-              "required": [
-                "type",
-                "resourceName"
-              ]
-            }
-          },
-          "type": "object",
-          "properties": {
-            "data":
-            {
-              "oneOf": [
-                { "$ref": "#/definitions/logicalOperation" },
-                { "$ref": "#/definitions/filter" },
-                { "$ref": "#/definitions/ambiguousFilter" },
-                { "$ref": "#/definitions/resource" }
-              ]
-            }
-          },
-          "required": [
-            "data"
-          ]
+            "#/definitions/logicalOperation"
+        };
+        JsonObject definitions = new JsonObject();
+        var filterDef = new FilterDefinition<T>(_concreteFilterFactories);
+        if (filterDef.TryCreateSchema(out var filterDefSchema))
+        {
+            references.Add("#/definitions/filter");
+            definitions.Add("filter", filterDefSchema);
         }
-        """;
+        var amFilterDef = new AmbiguousFilterDefinition<T>(_ambiguousFilters);
+        if (amFilterDef.TryCreateSchema(out var amFilterDefSchema))
+        {
+            references.Add("#/definitions/ambiguousFilter");
+            definitions.Add("ambiguousFilter", amFilterDefSchema);
+        }
+        var resourcesDef = new ResourceFilterDefinition<T>(_resources);
+        if (resourcesDef.TryCreateSchema(out var resourcesDefSchema))
+        {
+            references.Add("#/definitions/resource");
+            definitions.Add("resource", resourcesDefSchema);
+        }
+        var logicalOperationDef = new LogicalOperationDefinition(references);
+        definitions.Add("logicalOperation", logicalOperationDef.CreateSchema());
+
+        JsonObject result = new JsonObject()
+        {
+            { "type", "object" },
+            { "definitions", definitions },
+            { "properties", new JsonObject()
+                {
+                    { "data", new JsonObject()
+                        {
+                            { "oneOf", new JsonArray(references.Select(x =>
+                                new JsonObject()
+                                {
+                                    { "$ref", x }
+                                }).ToArray())
+                            }
+                        }
+                    }
+                }
+            },
+            { "required", new JsonArray("data") }
+        };
+        return result.ToJsonString();
+    }
 }
