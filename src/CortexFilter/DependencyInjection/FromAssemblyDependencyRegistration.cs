@@ -1,6 +1,7 @@
 ﻿using CortexFilter.Engine;
 using CortexFilter.Filters;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace CortexFilter.DependencyInjection;
@@ -83,13 +84,25 @@ internal class FromAssemblyDependencyRegistration
                     _services.AddScoped(iface, type);
                 }
             }
-            if (type.BaseType is not null
-                && type.BaseType.IsGenericType
-                && type.BaseType.GetGenericTypeDefinition() == ambiguousFilterType)
+            if (IsBaseTypeAmbiguousFilter(type, ambiguousFilterType, out var baseType))
             {
-                _services.AddScoped(type.BaseType, type);
+                _services.AddScoped(baseType, type);
             }
         }
+    }
+    private bool IsBaseTypeAmbiguousFilter(Type type, Type ambiguousFilterType, [NotNullWhen(true)] out Type? ambiguousType)
+    {
+        ambiguousType = null;
+        if (type.BaseType is null)
+            return false;
+        var baseType = type.BaseType;
+        if (type.BaseType.IsGenericType
+            && type.BaseType.GetGenericTypeDefinition() == ambiguousFilterType)
+        {
+            ambiguousType = type.BaseType;
+            return true;
+        }
+        return IsBaseTypeAmbiguousFilter(type.BaseType, ambiguousFilterType, out ambiguousType);
     }
     private void RegisterResourcesFromAssembly()
     {
