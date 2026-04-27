@@ -1,4 +1,4 @@
-﻿namespace CortexFilter.Operations;
+﻿namespace CortexFilter.Operations.Implementation.String;
 
 /// <summary>
 /// <see cref="IOperation{string}"/> used evaluate if <see cref="string"/> starts with certain value.

@@ -1,4 +1,6 @@
-﻿namespace CortexFilter.Operations;
+﻿using CortexFilter.Operations.Implementation.String;
+
+namespace CortexFilter.Operations;
 
 /// <summary>
 /// Used to create specific operations like <see cref="Equals{T}"/> or <see cref="Contains"/> to evaluate provided data.

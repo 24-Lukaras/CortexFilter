@@ -1,4 +1,8 @@
-﻿namespace CortexFilter.Operations;
+﻿using CortexFilter.Operations.Implementation.Comparison;
+using CortexFilter.Operations.Implementation.Dates;
+using CortexFilter.Operations.Implementation.String;
+
+namespace CortexFilter.Operations;
 
 /// <summary>
 /// Static class for creation of operations for filters. Use <see cref="CreateFromCode{T}(string, T)"/> to create an operation.
@@ -21,6 +25,41 @@ public static class OperationFactory
             return new EndsWith(value);
 
         return CreateFromCode<string>(code, value);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="DateTime"/> operation based on provided code.
+    /// </summary>
+    /// <param name="code">Code of operation. For example "<i>eq</i>" for <see cref="Equals{DateTime}"/> or "<i>contains</i>" for <see cref="Contains"/>.</param>
+    /// <param name="value">Number used in filtration.</param>
+    /// <returns>Operation used for filtration.</returns>
+    public static IOperation<DateTime?> CreateFromCodeForDateTime(string code, int value)
+    {
+        if (code == DayOf.Code)
+            return new DayOf(value);
+        else if (code == MonthOf.Code)
+            return new MonthOf(value);
+        else if (code == YearOf.Code)
+            return new YearOf(value);
+        return new InvalidOperation<DateTime?>();
+    }
+
+    /// <summary>
+    /// Creates a <see cref="DateTime"/> operation based on provided code.
+    /// </summary>
+    /// <param name="code">Code of operation. For example "<i>eq</i>" for <see cref="Equals{T}"/> or "<i>contains</i>" for <see cref="Contains"/>.</param>
+    /// <param name="value">DateTime used in filtration.</param>
+    /// <returns>Operation used for filtration.</returns>
+    public static IOperation<DateTime?> CreateFromCode(string code, DateTime value)
+    {
+        if (code == DayOf.Code)
+            return new DayOf(value.Day);
+        else if (code == MonthOf.Code)
+            return new MonthOf(value.Month);
+        else if (code == YearOf.Code)
+            return new YearOf(value.Year);
+
+        return CreateFromCode<DateTime?>(code, value);
     }
 
     /// <summary>
