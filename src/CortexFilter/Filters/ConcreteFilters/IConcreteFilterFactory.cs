@@ -7,6 +7,10 @@
 public interface IConcreteFilterFactory<T>
 {
     /// <summary>
+    /// Indicates if the filter factory can be used.
+    /// </summary>
+    bool Available { get; }
+    /// <summary>
     /// Filter name sent to LLM.
     /// </summary>
     string Name { get; }

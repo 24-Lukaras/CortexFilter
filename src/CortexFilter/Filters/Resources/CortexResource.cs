@@ -8,10 +8,14 @@
 public abstract class CortexResource<TSource, TResult> : ICortexResource<TSource>
 {
     /// <inheritdoc/>
+    public abstract bool Available { get; }
+
+    /// <inheritdoc/>
     public abstract string Name { get; }
 
     /// <inheritdoc/>
     public abstract string? Description { get; }
+
 
     protected IEnumerable<TResult>? _resourceItems;
 

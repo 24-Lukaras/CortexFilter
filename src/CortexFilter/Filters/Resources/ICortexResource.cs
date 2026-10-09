@@ -7,12 +7,17 @@
 internal interface ICortexResource<T> : IFilterInitializer<T>, ICollectionFilter<T>
 {
     /// <summary>
+    /// Indicates if the resource can be used.
+    /// </summary>
+    bool Available { get; }
+
+    /// <summary>
     /// Resource name sent to LLM.
     /// </summary>
-    public string Name { get; }
+    string Name { get; }
 
     /// <summary>
     /// Optional resource description sent to LLM.
     /// </summary>
-    public string? Description { get; }
+    string? Description { get; }
 }

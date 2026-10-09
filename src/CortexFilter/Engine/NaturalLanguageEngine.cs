@@ -29,9 +29,9 @@ public abstract class NaturalLanguageEngine<T> : INaturalLanguageEngine<T>
     /// <inheritdoc/>
     public async Task<IEnumerable<T>> SearchAsync(string query)
     {
-        var filterComposer = new FiltersComposer<T>(_properties.ConcreteFilterFactories,
-            _properties.AmbiguousFilters,
-            _properties.Resources);
+        var filterComposer = new FiltersComposer<T>(_properties.ConcreteFilterFactories.Where(x => x.Available).ToArray(),
+            _properties.AmbiguousFilters.Where(x => x.Available).ToArray(),
+            _properties.Resources.Where(x => x.Available).ToArray());
 
         var client = _properties.ClientProvider.GetClient();
 
@@ -48,6 +48,7 @@ public abstract class NaturalLanguageEngine<T> : INaturalLanguageEngine<T>
 
         var response = await client.CompleteChatAsync(messages.ToArray(), new ChatCompletionOptions()
         {
+            Temperature = 0.05f,
             ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat("response_format", BinaryData.FromString(filterComposer.Formatter.GetJsonSchema()))
         });
 

@@ -10,6 +10,11 @@ namespace CortexFilter.Filters;
 public abstract class AmbiguousFilter<T> : ICollectionFilter<T>, IFilterInitializer<T>
 {
     /// <summary>
+    /// Indicates if the filter can be used.
+    /// </summary>
+    public abstract bool Available { get; }
+
+    /// <summary>
     /// Name of filter sent to LLM.
     /// </summary>
     public abstract string Name { get; }
